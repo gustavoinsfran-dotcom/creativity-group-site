@@ -1617,5 +1617,434 @@ const finePointer = matchMedia('(pointer: fine)').matches;
   },{passive:true});
 })();
 </script>
+<!-- ===== HUB REAL v8 (Firebase) ===== -->
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore-compat.js"></script>
+<style>
+/* auth 2.0 */
+.auth-tabs{display:flex;gap:6px;background:var(--bg);border-radius:99px;padding:5px;margin-bottom:22px}
+.auth-tabs button{flex:1;padding:10px;border-radius:99px;font-weight:600;font-size:.85rem;background:none;color:var(--soft);transition:.2s}
+.auth-tabs button.on{background:var(--ink);color:#fff}
+.auth-err{background:#FDE8E8;color:#B03A2E;border-radius:10px;padding:10px 14px;font-size:.78rem;margin-top:12px;display:none;text-align:left}
+.auth-load{opacity:.6;pointer-events:none}
+/* perfil */
+.perfil-grid{display:grid;grid-template-columns:340px 1fr;gap:20px;align-items:start}
+.avatar-big{width:132px;height:132px;border-radius:50%;background:var(--grad);color:#fff;display:flex;align-items:center;justify-content:center;font-size:3rem;font-weight:700;margin:0 auto 14px;overflow:hidden;position:relative;border:4px solid #fff;box-shadow:var(--shadow)}
+.avatar-big img{width:100%;height:100%;object-fit:cover}
+.avatar,.msg .avatar{overflow:hidden}
+.avatar img,.msg .avatar img{width:100%;height:100%;object-fit:cover}
+.foto-btn{display:inline-flex;align-items:center;gap:8px;background:var(--grad-soft);color:var(--lila-d);border-radius:99px;padding:10px 20px;font-weight:600;font-size:.8rem;cursor:pointer;transition:.2s}
+.foto-btn:hover{background:var(--lila);color:#fff}
+.rolpill{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.12em;text-transform:uppercase;padding:4px 12px;border-radius:99px;background:var(--yellow);color:var(--ink);margin-top:6px}
+/* cumples */
+.cum-mes{font-size:.7rem;letter-spacing:.22em;text-transform:uppercase;font-weight:700;color:var(--lila-d);margin:26px 0 10px}
+.cum-item{display:flex;align-items:center;gap:14px;background:#fff;border-radius:14px;padding:12px 18px;margin-bottom:8px;box-shadow:0 3px 10px rgba(43,35,64,.04)}
+.cum-item .cd{width:44px;height:44px;border-radius:12px;background:var(--grad-soft);color:var(--lila-d);display:flex;flex-direction:column;align-items:center;justify-content:center;font-weight:800;flex-shrink:0;line-height:1}
+.cum-item .cd small{font-size:.5rem;letter-spacing:.08em;font-weight:700}
+.cum-item b{font-size:.88rem;display:block}
+.cum-item span.emp{font-size:.68rem;color:var(--soft);letter-spacing:.06em}
+.cum-item.hoy{background:var(--grad);color:#fff}
+.cum-item.hoy .cd{background:var(--yellow);color:var(--ink)}
+.cum-item.hoy span.emp{color:rgba(255,255,255,.75)}
+/* pizarra composer */
+.composer{background:#fff;border:2px dashed #D9D2EE;border-radius:18px;padding:20px;margin-bottom:20px}
+.composer h4{font-size:.95rem;margin-bottom:14px}
+.composer .row{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.pz-del{position:absolute;top:10px;right:12px;background:rgba(0,0,0,.25);color:#fff;width:26px;height:26px;border-radius:50%;font-size:.7rem;display:none}
+.post-card{position:relative}
+.admin .post-card .pz-del{display:block}
+.online-dot{width:8px;height:8px;border-radius:50%;background:#31C48D;display:inline-block;margin-right:5px}
+.estado-chip{font-size:.6rem;font-weight:700;padding:3px 10px;border-radius:99px;text-transform:uppercase}
+.hub-loading{position:fixed;inset:0;background:#F3F1F9;z-index:60;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:14px;color:var(--soft);font-size:.9rem}
+.hub-loading .spin{width:44px;height:44px;border-radius:50%;border:4px solid #E3DDF3;border-top-color:var(--lila);animation:spinSlow 1s linear infinite}
+.mode-pill{position:fixed;bottom:18px;left:18px;z-index:140;font-size:.66rem;font-weight:700;letter-spacing:.1em;padding:7px 14px;border-radius:99px;background:#DDF3E4;color:#1E7A46;text-transform:uppercase}
+.mode-pill.demo{background:#FDF6D8;color:#8A6D2F}
+</style>
+<script>
+/* ================= HUB REAL v8 ================= */
+(function(){
+'use strict';
+const CUMPLES = [{"n": "Paula Santarelli", "m": 1, "d": 2, "e": "INFINITY"}, {"n": "Jaquelina Feit", "m": 1, "d": 3, "e": "SOLS"}, {"n": "Alejandro Garcia", "m": 1, "d": 5, "e": "INFINITY"}, {"n": "Ariana Cadario", "m": 1, "d": 7, "e": "SOLS"}, {"n": "Elizabeth Suarez", "m": 1, "d": 9, "e": "G ASUNCION"}, {"n": "Sergio Bonanno", "m": 1, "d": 9, "e": "SOLS"}, {"n": "Claudia Martin", "m": 1, "d": 10, "e": "INFINITY"}, {"n": "Juan Valero", "m": 1, "d": 17, "e": "GASTRO"}, {"n": "Gustavo Insfran", "m": 1, "d": 20, "e": "INFINITY"}, {"n": "Victoria Rodriguez", "m": 1, "d": 26, "e": "PRODIGY"}, {"n": "Juan Pablo Ambar", "m": 1, "d": 26, "e": "INFINITY"}, {"n": "Bianca Haimovici", "m": 2, "d": 3, "e": "INFINITY"}, {"n": "Sandra Rodriguez", "m": 2, "d": 7, "e": "PRODIGY"}, {"n": "Nicolas Migues", "m": 2, "d": 7, "e": "INNOVATE"}, {"n": "Diego Cucco", "m": 2, "d": 8, "e": "SOLS"}, {"n": "Luciana Morales", "m": 2, "d": 19, "e": "INFINITY"}, {"n": "Alejandro Kronicz", "m": 2, "d": 23, "e": "PRODIGY"}, {"n": "Horacio Amaya", "m": 2, "d": 27, "e": "PRODIGY"}, {"n": "Renata Tallei", "m": 3, "d": 2, "e": "INNOVATE"}, {"n": "Katherine Gaitan", "m": 3, "d": 5, "e": "G ASUNCION"}, {"n": "Federico Gonzalez", "m": 3, "d": 11, "e": "INNOVATE"}, {"n": "Adriana Galeano", "m": 3, "d": 11, "e": "INFINITY"}, {"n": "Federico Galarza", "m": 3, "d": 14, "e": "INNOVATE"}, {"n": "Patricia Gazzoni", "m": 3, "d": 17, "e": "INFINITY"}, {"n": "Alejandro Fernandez", "m": 3, "d": 24, "e": "PRODIGY"}, {"n": "Thiago Sbattella", "m": 3, "d": 29, "e": "INFINITY"}, {"n": "Leandro Maciel", "m": 3, "d": 30, "e": "PRODIGY"}, {"n": "Juan Cruz Barzola", "m": 4, "d": 3, "e": "PRODIGY"}, {"n": "Karla Farias", "m": 4, "d": 4, "e": "SOLS"}, {"n": "Carolina Dadamo", "m": 4, "d": 23, "e": "INNOVATE"}, {"n": "Gaston Monzon", "m": 4, "d": 25, "e": "INFINITY"}, {"n": "Rodrigo Caballero", "m": 5, "d": 7, "e": "PRODIGY"}, {"n": "Lucas Lecce", "m": 5, "d": 9, "e": "PRODIGY"}, {"n": "Priscila Alonso", "m": 5, "d": 11, "e": "INFINITY"}, {"n": "Jhaskel Rojas", "m": 5, "d": 14, "e": "PRODIGY"}, {"n": "Sabrina Bossel", "m": 5, "d": 15, "e": "INNOVATE"}, {"n": "Lorena Sanchez", "m": 5, "d": 16, "e": "PRODIGY"}, {"n": "Julieta Volpe", "m": 5, "d": 26, "e": "INFINITY"}, {"n": "Juan Catari", "m": 5, "d": 30, "e": "SOLS"}, {"n": "Luis Knorr", "m": 5, "d": 31, "e": "DIRECTOR"}, {"n": "Julieta Cerisola", "m": 6, "d": 2, "e": "INNOVATE"}, {"n": "Juan Ignacio Bellometi", "m": 6, "d": 2, "e": "PRODIGY"}, {"n": "Eduardo Garnica", "m": 6, "d": 6, "e": "SOLS"}, {"n": "Gonzalo Fourmentel Gomez", "m": 6, "d": 9, "e": "SOLS"}, {"n": "Rocio Chiguay", "m": 6, "d": 10, "e": "INNOVATE"}, {"n": "Joaquin Hernandez", "m": 6, "d": 17, "e": "PRODIGY"}, {"n": "Lucas Almeida", "m": 6, "d": 26, "e": "INFINITY"}, {"n": "Antonio Rojas", "m": 7, "d": 6, "e": "CIRCULAR"}, {"n": "Agustina Souto", "m": 7, "d": 7, "e": "INNOVATE"}, {"n": "Pedro Berlioz", "m": 7, "d": 8, "e": "CIRCULAR"}, {"n": "Ignacio Piñeiro", "m": 7, "d": 17, "e": "SOLS"}, {"n": "Maria Florencia Villarreal", "m": 7, "d": 20, "e": "INNOVATE"}, {"n": "Nadia Dib", "m": 7, "d": 28, "e": "PRODIGY"}, {"n": "Diana Caltagirone", "m": 7, "d": 29, "e": "SOLS"}, {"n": "Ramiro Ursino", "m": 8, "d": 7, "e": "SOLS"}, {"n": "Ignacio Rivero", "m": 8, "d": 18, "e": "INFINITY"}, {"n": "Dimarcos Castellanos", "m": 8, "d": 21, "e": "SOLS"}, {"n": "Cecilia Guerrero", "m": 8, "d": 24, "e": "PRODIGY"}, {"n": "Miqueas Nass", "m": 8, "d": 29, "e": "PRODIGY"}, {"n": "Julian Rivadeo", "m": 8, "d": 30, "e": "SOLS"}, {"n": "Marvin Rodriguez", "m": 9, "d": 1, "e": "INNOVATE"}, {"n": "Giancarlo Colella", "m": 9, "d": 5, "e": "INNOVATE"}, {"n": "Gabriela Ávila", "m": 9, "d": 6, "e": "INFINITY"}, {"n": "Jonathan Torrent", "m": 9, "d": 6, "e": "INNOVATE"}, {"n": "Romina Jensen", "m": 9, "d": 16, "e": "SOLS"}, {"n": "Danny Montagut", "m": 9, "d": 27, "e": "SOLS"}, {"n": "Julian Feito", "m": 10, "d": 1, "e": "INFINITY"}, {"n": "Mateo Gonzales", "m": 10, "d": 3, "e": "INNOVATE"}, {"n": "Fernando Villagra", "m": 10, "d": 8, "e": "DIRECTOR"}, {"n": "Fernando Esteban Oblolz", "m": 10, "d": 8, "e": "INNOVATE"}, {"n": "Gaston Retamoso", "m": 10, "d": 15, "e": "G ASUNCION"}, {"n": "Valentina Garcia", "m": 10, "d": 22, "e": "PRODIGY"}, {"n": "Luis Mendoza", "m": 10, "d": 28, "e": "INFINITY"}, {"n": "Juan Ignacio Barzola", "m": 11, "d": 5, "e": "INNOVATE"}, {"n": "Emiliano Bargas", "m": 11, "d": 13, "e": "DIRECTOR"}, {"n": "Pablo Kitaigorodsky", "m": 11, "d": 14, "e": "INNOVATE"}, {"n": "Marcelo Arias Mollenhauer", "m": 11, "d": 19, "e": "INNOVATE"}, {"n": "Evangelina Cives", "m": 11, "d": 21, "e": "SOLS"}, {"n": "Matias Medina", "m": 11, "d": 22, "e": "SOLS"}, {"n": "Ezequiel Martin", "m": 12, "d": 1, "e": "PRODIGY"}, {"n": "Natalio Aparicio", "m": 12, "d": 1, "e": "PRODIGY"}, {"n": "Cecilia Almeida", "m": 12, "d": 1, "e": "INFINITY"}, {"n": "Guillermo Norro", "m": 12, "d": 3, "e": "DIRECTOR"}, {"n": "Facundo Ezequiel Gonzalez", "m": 12, "d": 5, "e": "INFINITY"}, {"n": "Gabriela Ibarra", "m": 12, "d": 12, "e": "INNOVATE"}, {"n": "Victoria Molina", "m": 12, "d": 19, "e": "PRODIGY"}, {"n": "Gallardo, Cintia", "m": 12, "d": 23, "e": "PRODIGY"}, {"n": "Larroque, Franco", "m": 12, "d": 27, "e": "PRODIGY"}, {"n": "Callejo Igancio", "m": 12, "d": 28, "e": "PRODIGY"}];
+const MESES_L = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Agosto','Septiembre','Octubre','Noviembre','Diciembre'];
+const EMPRESAS = {INFINITY:'Infinity Pharma',SOLS:'SolS',PRODIGY:'Prodigy',INNOVATE:'Innovate Pharma',GASTRO:'Gastronomía','G ASUNCION':'Gastronomía Asunción',CIRCULAR:'Circular',DIRECTOR:'Dirección'};
+const AREAS = ['Marketing y Comunicación','Comercial','Administración y Finanzas','RRHH','Sistemas','Regulatorio','Gastronomía','Logística','Dirección','Otra'];
+const ADMINS = ['gustavo.insfran@infinitypharma.com.ar','gustavo.insfran@creativitygroup.com.ar','rrhh@creativitygroup.com.ar'];
+const MAIL_DESTINO = { soporte:'gustavo.insfran@infinitypharma.com.ar', salas:'gustavo.insfran@infinitypharma.com.ar', almuerzos:'gustavo.insfran@infinitypharma.com.ar' };
+const FBCONF = {apiKey:"AIzaSyC2ywnoU_lngTmBUhhC5yaKhNKKExghYK4",authDomain:"creativity-hub-54945.firebaseapp.com",projectId:"creativity-hub-54945",storageBucket:"creativity-hub-54945.firebasestorage.app",messagingSenderId:"985418381448",appId:"1:985418381448:web:c81990514a056b7bbb073d"};
+
+/* ---- cumpleaños (funciona en demo y real) ---- */
+function proximosCumples(n){
+  const hoy=new Date(); const hm=hoy.getMonth()+1, hd=hoy.getDate();
+  const orden = CUMPLES.map(c=>{ let delta=(c.m-hm)*31+(c.d-hd); if(delta<0) delta+=372; return {...c,delta}; });
+  orden.sort((a,b)=>a.delta-b.delta);
+  return orden.slice(0,n);
+}
+function montarCumples(){
+  const side=document.querySelector('[data-view=organigrama]');
+  if(!side||document.querySelector('[data-view=cumples]')) return;
+  side.insertAdjacentHTML('beforebegin','<div class="side-item" data-view="cumples" onclick="go(\'cumples\',this)"><span class="si">🎂</span><span class="st">Cumpleaños</span></div>');
+  const main=document.querySelector('.hub-main');
+  let html='<div class="hub-view" id="v-cumples"><div class="notice">🎂 Los cumpleaños de todo el grupo, mes a mes. Los de hoy aparecen destacados — ¡no te olvides de saludar!</div>';
+  const hoy=new Date(); const hm=hoy.getMonth()+1, hd=hoy.getDate();
+  for(let m=1;m<=12;m++){
+    const del = CUMPLES.filter(c=>c.m===m);
+    if(!del.length) continue;
+    html+=`<div class="cum-mes">${MESES_L[m]}</div>`;
+    del.forEach(c=>{
+      const esHoy = c.m===hm&&c.d===hd;
+      html+=`<div class="cum-item${esHoy?' hoy':''}"><div class="cd">${c.d}<small>${MESES_L[m].slice(0,3).toUpperCase()}</small></div><div><b>${c.n}${esHoy?' 🎉':''}</b><span class="emp">${EMPRESAS[c.e]||c.e}</span></div></div>`;
+    });
+  }
+  html+='</div>';
+  main.insertAdjacentHTML('beforeend',html);
+  // dashboard: próximos reales
+  const card=[...document.querySelectorAll('#v-inicio .card h4')].find(h=>h.textContent.includes('Cumples'));
+  if(card){
+    const cont=card.parentElement;
+    cont.querySelectorAll('.mini-item').forEach(e=>e.remove());
+    proximosCumples(4).forEach(c=>{
+      const esHoy=c.delta===0;
+      cont.insertAdjacentHTML('beforeend',`<div class="mini-item"><span class="emoji">${esHoy?'🎉':'🎈'}</span><div>${c.n} ${esHoy?'<b>· ¡HOY!</b>':''}<small>${c.d} de ${MESES_L[c.m].toLowerCase()} · ${EMPRESAS[c.e]||c.e}</small></div></div>`);
+    });
+  }
+}
+
+/* ---- si Firebase no está disponible: modo demo ---- */
+if(typeof firebase==='undefined'){
+  document.addEventListener('DOMContentLoaded',montarCumples); montarCumples();
+  const p=document.createElement('div');p.className='mode-pill demo';p.textContent='● Modo demo';document.body.appendChild(p);
+  return;
+}
+
+/* ================= MODO REAL ================= */
+firebase.initializeApp(FBCONF);
+const auth=firebase.auth(), db=firebase.firestore();
+const FV=firebase.firestore.FieldValue;
+let ME=null, MYDOC=null, USERS={}, unsubs=[], chatUnsub=null;
+
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+/* ---- mails de solicitudes (FormSubmit) ---- */
+function sendMail(tipo, subject, lineas){
+  const to = MAIL_DESTINO[tipo]||MAIL_DESTINO.soporte;
+  fetch('https://formsubmit.co/ajax/'+to,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify({_subject:'[Creativity Hub] '+subject, _template:'table', ...lineas})
+  }).catch(()=>{});
+}
+
+/* ---- login card 2.0 ---- */
+function montarAuthUI(){
+  const card=document.querySelector('.login-card');
+  if(!card) return;
+  card.innerHTML=`
+    <button class="popup-close" style="background:var(--bg);color:var(--soft)" onclick="closeLogin()">✕</button>
+    <img class="mark" src="" data-logo="petalmark" alt="" style="width:56px;height:56px;object-fit:contain;margin-bottom:10px">
+    <h3>Creativity Hub</h3>
+    <p>Tu universo como parte del equipo</p>
+    <div class="auth-tabs"><button id="tabIn" class="on" onclick="authTab('in')">Ingresar</button><button id="tabUp" onclick="authTab('up')">Crear mi cuenta</button></div>
+    <div class="field" id="fNombre" style="display:none;text-align:left"><label>Nombre y apellido</label><input id="aNombre" placeholder="Ej.: Carolina Méndez"></div>
+    <div class="field" id="fArea" style="display:none;text-align:left"><label>Área / Empresa</label><select id="aArea">${AREAS.map(a=>`<option>${a}</option>`).join('')}</select></div>
+    <div class="field" style="text-align:left"><label>Email</label><input id="aEmail" type="email" placeholder="nombre@creativitygroup.com.ar"></div>
+    <div class="field" style="text-align:left"><label>Contraseña</label><input id="aPass" type="password" placeholder="Mínimo 6 caracteres" onkeydown="if(event.key==='Enter')authGo()"></div>
+    <button class="btn btn-lila" id="authBtn" style="width:100%;justify-content:center" onclick="authGo()">Ingresar</button>
+    <div class="auth-err" id="authErr"></div>
+    <div class="demo-note">🔐 Cuentas reales del grupo. Tus datos quedan protegidos en la nube del Hub.</div>`;
+  if(window.LOGOS) card.querySelector('[data-logo]').src=window.LOGOS?LOGOS.petalmark:'';
+  try{ card.querySelector('img.mark').src = (typeof LOGOS!=='undefined')?LOGOS.petalmark:''; }catch(e){}
+}
+let authMode='in';
+window.authTab=function(m){
+  authMode=m;
+  $('tabIn').classList.toggle('on',m==='in');$('tabUp').classList.toggle('on',m==='up');
+  $('fNombre').style.display=m==='up'?'block':'none';
+  $('fArea').style.display=m==='up'?'block':'none';
+  $('authBtn').textContent=m==='up'?'Crear cuenta y entrar':'Ingresar';
+  $('authErr').style.display='none';
+};
+const ERRS={'auth/invalid-email':'El email no es válido.','auth/user-not-found':'No existe una cuenta con ese email. Creá tu cuenta.','auth/wrong-password':'Contraseña incorrecta.','auth/invalid-credential':'Email o contraseña incorrectos.','auth/email-already-in-use':'Ya existe una cuenta con ese email. Ingresá directamente.','auth/weak-password':'La contraseña debe tener al menos 6 caracteres.'};
+window.authGo=async function(){
+  const email=$('aEmail').value.trim().toLowerCase(), pass=$('aPass').value;
+  const err=$('authErr'); err.style.display='none';
+  $('authBtn').classList.add('auth-load'); $('authBtn').textContent='Un momento…';
+  try{
+    if(authMode==='up'){
+      const nombre=$('aNombre').value.trim();
+      if(!nombre) throw {code:'x',message:'Contanos tu nombre y apellido.'};
+      const cred=await auth.createUserWithEmailAndPassword(email,pass);
+      await db.collection('users').doc(cred.user.uid).set({
+        nombre, area:$('aArea').value, email,
+        rol: ADMINS.includes(email)?'admin':'colaborador',
+        foto:null, tour:false, creado:FV.serverTimestamp(), lastSeen:FV.serverTimestamp()
+      });
+    } else {
+      await auth.signInWithEmailAndPassword(email,pass);
+    }
+    closeLogin();
+  }catch(e){
+    err.textContent=ERRS[e.code]||e.message||'Algo salió mal. Probá de nuevo.';
+    err.style.display='block';
+  }
+  $('authBtn').classList.remove('auth-load'); window.authTab(authMode);
+};
+
+/* ---- sesión ---- */
+auth.onAuthStateChanged(async user=>{
+  if(user){
+    ME=user;
+    let snap=await db.collection('users').doc(user.uid).get();
+    if(!snap.exists){
+      await db.collection('users').doc(user.uid).set({nombre:user.email.split('@')[0],area:'Otra',email:user.email,rol:ADMINS.includes(user.email)?'admin':'colaborador',foto:null,tour:false,creado:FV.serverTimestamp()});
+      snap=await db.collection('users').doc(user.uid).get();
+    }
+    MYDOC=snap.data();
+    entrarHub();
+  } else {
+    ME=null;MYDOC=null;
+    unsubs.forEach(u=>u&&u()); unsubs=[]; if(chatUnsub){chatUnsub();chatUnsub=null;}
+    document.getElementById('hub').classList.remove('active');
+    document.getElementById('public').style.display='block';
+    const fc=document.getElementById('floatCta'); if(fc) fc.classList.add('show');
+  }
+});
+
+function avatarHTML(u,cls){
+  if(u&&u.foto) return `<div class="${cls}"><img src="${u.foto}" alt=""></div>`;
+  const l=(u&&u.nombre?u.nombre:'?').charAt(0).toUpperCase();
+  return `<div class="${cls}">${l}</div>`;
+}
+
+function entrarHub(){
+  document.getElementById('public').style.display='none';
+  document.getElementById('floatCta').classList.remove('show');
+  const hub=document.getElementById('hub'); hub.classList.add('active');
+  window.scrollTo(0,0);
+  const nombre=MYDOC.nombre.split(' ')[0];
+  $('greet').innerHTML=`¡Hola, ${esc(nombre)}! 👋`;
+  $('uname').textContent=MYDOC.nombre;
+  const d=new Date();
+  $('dateline').textContent=d.toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'});
+  const av=$('uavatar'); av.innerHTML=MYDOC.foto?`<img src="${MYDOC.foto}">`:esc(MYDOC.nombre.charAt(0));
+  if(MYDOC.rol==='admin') document.body.classList.add('admin');
+  montarCumples(); montarPerfil(); vivirPizarra(); vivirChat('general'); vivirSolicitudes(); vivirReservas(); presencia();
+  if(!MYDOC.tour){ startTour(); db.collection('users').doc(ME.uid).update({tour:true}); }
+  if(!document.querySelector('.mode-pill')){const p=document.createElement('div');p.className='mode-pill';p.textContent='● Hub en vivo';document.body.appendChild(p);}
+}
+window.logout=function(){ auth.signOut(); toast('¡Hasta la próxima! 👋'); };
+
+/* ---- usuarios en vivo (avatares/roles en todo el hub) ---- */
+unsubsPushUsers();
+function unsubsPushUsers(){
+  db.collection('users').onSnapshot(s=>{
+    s.forEach(doc=>USERS[doc.id]={id:doc.id,...doc.data()});
+    if(ME&&USERS[ME.uid]){ MYDOC=USERS[ME.uid];
+      const av=$('uavatar'); if(av) av.innerHTML=MYDOC.foto?`<img src="${MYDOC.foto}">`:esc(MYDOC.nombre.charAt(0));
+    }
+  });
+}
+
+/* ---- perfil ---- */
+function montarPerfil(){
+  if(document.querySelector('[data-view=perfil]')) return;
+  const top=document.querySelector('[data-view=inicio]');
+  top.insertAdjacentHTML('afterend','<div class="side-item" data-view="perfil" onclick="go(\'perfil\',this);pintarPerfil()"><span class="si">👤</span><span class="st">Mi perfil</span></div>');
+  document.querySelector('.hub-main').insertAdjacentHTML('beforeend',`
+  <div class="hub-view" id="v-perfil">
+    <div class="perfil-grid">
+      <div class="card" style="text-align:center">
+        <div class="avatar-big" id="pfAv"></div>
+        <label class="foto-btn">📷 Cambiar foto<input type="file" id="pfFile" accept="image/*" style="display:none" onchange="subirFoto(this)"></label>
+        <div id="pfRol"></div>
+        <p style="font-size:.72rem;color:var(--soft);margin-top:14px">Tu foto aparece en el chat y en todo el Hub.</p>
+      </div>
+      <div class="card">
+        <h4>✏️ Mis datos</h4>
+        <div class="field"><label>Nombre y apellido</label><input id="pfNombre"></div>
+        <div class="field"><label>Área / Empresa</label><select id="pfArea">${AREAS.map(a=>`<option>${a}</option>`).join('')}</select></div>
+        <div class="field"><label>Email</label><input id="pfEmail" disabled style="opacity:.6"></div>
+        <button class="btn btn-lila" onclick="guardarPerfil()">Guardar cambios</button>
+      </div>
+    </div>
+  </div>`);
+}
+window.pintarPerfil=function(){
+  $('pfAv').innerHTML=MYDOC.foto?`<img src="${MYDOC.foto}">`:esc(MYDOC.nombre.charAt(0));
+  $('pfNombre').value=MYDOC.nombre; $('pfEmail').value=MYDOC.email;
+  $('pfArea').value=AREAS.includes(MYDOC.area)?MYDOC.area:'Otra';
+  $('pfRol').innerHTML=`<span class="rolpill">${MYDOC.rol==='admin'?'★ Admin':'Colaborador/a'}</span>`;
+};
+window.subirFoto=function(inp){
+  const f=inp.files[0]; if(!f) return;
+  const img=new Image(); const rd=new FileReader();
+  rd.onload=e=>{ img.onload=()=>{
+    const c=document.createElement('canvas'); const s=Math.min(img.width,img.height);
+    c.width=c.height=160; const x=(img.width-s)/2,y=(img.height-s)/2;
+    c.getContext('2d').drawImage(img,x,y,s,s,0,0,160,160);
+    const data=c.toDataURL('image/jpeg',.78);
+    db.collection('users').doc(ME.uid).update({foto:data}).then(()=>{ $('pfAv').innerHTML=`<img src="${data}">`; toast('¡Foto actualizada! 📷'); });
+  }; img.src=e.target.result; };
+  rd.readAsDataURL(f);
+};
+window.guardarPerfil=function(){
+  const nombre=$('pfNombre').value.trim(); if(!nombre){toast('El nombre no puede quedar vacío');return;}
+  db.collection('users').doc(ME.uid).update({nombre,area:$('pfArea').value}).then(()=>{ $('uname').textContent=nombre; $('greet').innerHTML=`¡Hola, ${esc(nombre.split(' ')[0])}! 👋`; toast('Perfil guardado ✅'); });
+};
+
+/* ---- pizarra en vivo ---- */
+const PZCOLORS=['var(--grad)','linear-gradient(120deg,#F6A83C,#FCE762)','linear-gradient(120deg,#7B6CD9,#5A4BB8)','linear-gradient(120deg,#3FA23C,#8FCFA7)','linear-gradient(120deg,#92278F,#C86BC4)','linear-gradient(120deg,#2B2340,#5A4BB8)'];
+const PZEMOJIS=['📣','🎉','🧾','🥗','📚','🏆','🎪','💜'];
+function vivirPizarra(){
+  const cont=document.querySelector('#v-pizarra .pizarra'); if(!cont) return;
+  if(document.body.classList.contains('admin') && !$('pzComposer')){
+    cont.insertAdjacentHTML('beforebegin',`
+    <div class="composer" id="pzComposer">
+      <h4>📌 Publicar en la pizarra <span class="rolpill" style="margin:0">solo admins</span></h4>
+      <div class="row"><div class="field"><label>Categoría</label><input id="pzTag" placeholder="Ej.: Evento interno"></div>
+      <div class="field"><label>Emoji</label><select id="pzEmoji">${PZEMOJIS.map(e=>`<option>${e}</option>`).join('')}</select></div></div>
+      <div class="field"><label>Título</label><input id="pzTitulo" placeholder="Título del comunicado"></div>
+      <div class="field"><label>Mensaje</label><textarea id="pzCuerpo" rows="3" placeholder="Contale al equipo…"></textarea></div>
+      <button class="btn btn-lila" onclick="publicarPz()">Publicar 📣</button>
+    </div>`);
+  }
+  const u=db.collection('pizarra').orderBy('ts','desc').limit(30).onSnapshot(s=>{
+    if(s.empty){ cont.innerHTML='<div class="notice" style="grid-column:1/-1">Todavía no hay comunicados. ¡El primero está por llegar!</div>'; return; }
+    let h='';let i=0;
+    s.forEach(doc=>{ const p=doc.data();
+      const fecha=p.ts&&p.ts.toDate?p.ts.toDate().toLocaleDateString('es-AR',{day:'numeric',month:'short'}):'';
+      h+=`<div class="post-card"><button class="pz-del" onclick="borrarPz('${doc.id}')">✕</button><div class="post-band" style="background:${PZCOLORS[i%PZCOLORS.length]}">${esc(p.emoji||'📣')}</div><div class="pc-body"><span class="pc-tag">${esc(p.tag||'Comunicado')}</span><h4>${esc(p.titulo)}</h4><p>${esc(p.cuerpo)}</p><time>${esc(p.autor||'')} · ${fecha}</time></div></div>`; i++;
+    });
+    cont.innerHTML=h;
+  });
+  unsubs.push(u);
+}
+window.publicarPz=function(){
+  const t=$('pzTitulo').value.trim(), c=$('pzCuerpo').value.trim();
+  if(!t||!c){toast('Completá título y mensaje 📌');return;}
+  db.collection('pizarra').add({tag:$('pzTag').value.trim()||'Comunicado',emoji:$('pzEmoji').value,titulo:t,cuerpo:c,autor:MYDOC.nombre,uid:ME.uid,ts:FV.serverTimestamp()});
+  $('pzTitulo').value='';$('pzCuerpo').value='';$('pzTag').value='';
+  toast('¡Publicado en la pizarra! 📣');
+};
+window.borrarPz=function(id){ db.collection('pizarra').doc(id).delete(); toast('Comunicado eliminado'); };
+
+/* ---- chat en vivo ---- */
+let CANAL='general';
+function vivirChat(ch){
+  CANAL=ch;
+  if(chatUnsub) chatUnsub();
+  const box=$('chatMsgs');
+  box.innerHTML='<div style="text-align:center;color:var(--soft);font-size:.8rem;padding:20px">Cargando mensajes…</div>';
+  chatUnsub=db.collection('chats').doc(ch).collection('msgs').orderBy('ts','asc').limitToLast(60).onSnapshot(s=>{
+    let h='';
+    if(s.empty) h='<div style="text-align:center;color:var(--soft);font-size:.8rem;padding:20px">Sé el primero en escribir en #'+esc(ch)+' 💬</div>';
+    s.forEach(doc=>{ const m=doc.data(); const u=USERS[m.uid]||{nombre:m.nombre||'—'};
+      const mine=ME&&m.uid===ME.uid;
+      const rol=(u.rol==='admin')?'<span class="role role-dir">Admin</span>':'';
+      const online=u.lastSeen&&u.lastSeen.toDate&&(Date.now()-u.lastSeen.toDate().getTime()<5*60*1000)?'<span class="online-dot"></span>':'';
+      const hora=m.ts&&m.ts.toDate?m.ts.toDate().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'}):'';
+      h+=`<div class="msg ${mine?'mine':''}">${avatarHTML(u,'avatar')}<div class="msg-b"><div class="who">${online}${esc(u.nombre)} ${rol} <span style="font-weight:400;opacity:.55;font-size:.65rem">${hora}</span></div><p>${esc(m.txt)}</p></div></div>`;
+    });
+    box.innerHTML=h; box.scrollTop=box.scrollHeight;
+  });
+}
+window.setChannel=function(ch,el){
+  document.querySelectorAll('.channel').forEach(c=>c.classList.remove('active'));
+  el.classList.add('active');
+  vivirChat(ch.replace('#','').trim());
+};
+window.sendMsg=function(){
+  const inp=$('chatText'); const txt=inp.value.trim(); if(!txt) return;
+  db.collection('chats').doc(CANAL).collection('msgs').add({uid:ME.uid,nombre:MYDOC.nombre,txt,ts:FV.serverTimestamp()});
+  inp.value='';
+};
+document.querySelectorAll('.channel').forEach(c=>{ const name=c.textContent.replace('#','').trim(); c.onclick=()=>window.setChannel(name,c); });
+
+/* ---- solicitudes: soporte ---- */
+window.sendTicket=function(){
+  const desc=$('supDesc').value.trim(); if(!desc){toast('Contanos qué pasa para poder ayudarte 🛠️');return;}
+  const cat=$('supCat').value, urg=$('supUrg').value;
+  db.collection('solicitudes').add({tipo:'soporte',categoria:cat,urgencia:urg,detalle:desc,uid:ME.uid,nombre:MYDOC.nombre,area:MYDOC.area,estado:'abierto',ts:FV.serverTimestamp()});
+  sendMail('soporte',`Soporte IT · ${urg} · ${MYDOC.nombre}`,{Solicitante:MYDOC.nombre,Area:MYDOC.area,Email:MYDOC.email,Categoria:cat,Urgencia:urg,Detalle:desc});
+  $('supDesc').value='';
+  toast('Ticket enviado a Sistemas ✅ Queda registrado y avisamos por mail');
+};
+function vivirSolicitudes(){
+  const u=db.collection('solicitudes').where('uid','==',ME.uid).onSnapshot(s=>{
+    const list=$('ticketList'); if(!list) return;
+    const arr=[]; s.forEach(d=>arr.push({id:d.id,...d.data()}));
+    arr.sort((a,b)=>(b.ts&&b.ts.seconds||0)-(a.ts&&a.ts.seconds||0));
+    if(!arr.length){ list.innerHTML='<p style="font-size:.8rem;color:var(--soft)">Todavía no hiciste solicitudes.</p>'; return; }
+    list.innerHTML=arr.slice(0,10).map(t=>{
+      const icon=t.tipo==='soporte'?'🛠️':t.tipo==='sala'?'📅':'🍽️';
+      const est=t.estado==='abierto'?'<span class="status st-open">Abierto</span>':t.estado==='curso'?'<span class="status st-prog">En curso</span>':'<span class="status st-done">Resuelto</span>';
+      const fecha=t.ts&&t.ts.toDate?t.ts.toDate().toLocaleDateString('es-AR',{day:'numeric',month:'short'}):'';
+      const txt=t.tipo==='soporte'?t.detalle:t.tipo==='sala'?`${t.sala} · ${t.hora} h`:`Almuerzos semana`;
+      return `<div class="ticket"><span>${icon}</span><div>${esc(String(txt).slice(0,48))}<small style="display:block;color:var(--soft);font-size:.7rem">${fecha}</small></div>${est}</div>`;
+    }).join('');
+  });
+  unsubs.push(u);
+}
+
+/* ---- salas en vivo ---- */
+function hoyISO(){ return new Date().toISOString().slice(0,10); }
+function vivirReservas(){
+  const u=db.collection('reservas').where('fecha','==',hoyISO()).onSnapshot(s=>{
+    const mapa={}; s.forEach(d=>mapa[d.data().sala+'_'+d.data().hora]={id:d.id,...d.data()});
+    document.querySelectorAll('.slots').forEach(sl=>{
+      const sala=sl.dataset.room;
+      sl.querySelectorAll('.slot').forEach(el=>{
+        const r=mapa[sala+'_'+el.textContent.trim()];
+        el.classList.remove('busy','mine'); el.title='';
+        if(r){ if(ME&&r.uid===ME.uid){el.classList.add('mine');el.title='Tu reserva — clic para liberar';} else {el.classList.add('busy');el.title='Reservada por '+(r.nombre||'otro equipo');} }
+      });
+    });
+  });
+  unsubs.push(u);
+}
+window.bookSlot=async function(el){
+  const sala=el.closest('.slots').dataset.room, hora=el.textContent.trim();
+  const id=`${sala}_${hoyISO()}_${hora.replace(':','')}`;
+  const ref=db.collection('reservas').doc(id);
+  if(el.classList.contains('mine')){ await ref.delete(); toast('Reserva liberada'); return; }
+  if(el.classList.contains('busy')){ toast('Ese horario ya está reservado 😕'); return; }
+  const snap=await ref.get();
+  if(snap.exists){ toast('Justo la reservaron 😕 Probá otro horario'); return; }
+  await ref.set({sala,fecha:hoyISO(),hora,uid:ME.uid,nombre:MYDOC.nombre,ts:FV.serverTimestamp()});
+  db.collection('solicitudes').add({tipo:'sala',sala,hora,fecha:hoyISO(),uid:ME.uid,nombre:MYDOC.nombre,estado:'resuelto',ts:FV.serverTimestamp()});
+  sendMail('salas',`Reserva de sala · ${sala} ${hora} h · ${MYDOC.nombre}`,{Colaborador:MYDOC.nombre,Sala:sala,Fecha:hoyISO(),Hora:hora});
+  toast(`Sala reservada a las ${hora} ✅`);
+};
+
+/* ---- almuerzos ---- */
+function semanaISO(){ const d=new Date();const o=new Date(d.getFullYear(),0,1);const w=Math.ceil(((d-o)/86400000+o.getDay()+1)/7);return d.getFullYear()+'-S'+w; }
+window.saveLunch=function(){
+  const n=Object.keys(lunch).length;
+  if(n<5){ toast(`Te faltan ${5-n} día(s) por elegir 🍽️`); return; }
+  const dias=['Lunes','Martes','Miércoles','Jueves','Viernes'];
+  const eleccion={};
+  document.querySelectorAll('.opt.sel').forEach(o=>{ eleccion[dias[o.dataset.day]]=o.textContent.trim(); });
+  db.collection('almuerzos').doc(ME.uid+'_'+semanaISO()).set({uid:ME.uid,nombre:MYDOC.nombre,semana:semanaISO(),eleccion,ts:FV.serverTimestamp()});
+  db.collection('solicitudes').add({tipo:'almuerzo',uid:ME.uid,nombre:MYDOC.nombre,estado:'resuelto',ts:FV.serverTimestamp()});
+  sendMail('almuerzos',`Planilla de almuerzos · ${MYDOC.nombre} · ${semanaISO()}`,{Colaborador:MYDOC.nombre,Semana:semanaISO(),...eleccion});
+  toast('¡Planilla confirmada y enviada a RRHH! ✅🍽️');
+};
+
+/* ---- cupón: nombre real automático ---- */
+const _genCupon=window.genCupon;
+window.genCupon=function(){ if(MYDOC&&!$('cupNombre').value.trim()) $('cupNombre').value=MYDOC.nombre; _genCupon(); };
+
+/* ---- presencia ---- */
+function presencia(){
+  const ping=()=>ME&&db.collection('users').doc(ME.uid).update({lastSeen:FV.serverTimestamp()}).catch(()=>{});
+  ping(); const t=setInterval(ping,120000); unsubs.push(()=>clearInterval(t));
+}
+
+/* ---- arranque ---- */
+montarAuthUI();
+montarCumples();
+/* login button del nav abre el overlay (igual que antes) */
+})();
+</script>
+<!-- ===== /HUB REAL ===== -->
 </body>
 </html>
