@@ -584,7 +584,6 @@ html{scroll-padding-top:86px}
     <p class="isub">Un grupo, muchas industrias, un mismo equipo.</p>
     <div class="ibtns">
       <button class="btn btn-yellow" onclick="event.stopPropagation();endIntro('quienes')">Conocé el grupo</button>
-      <button class="btn btn-ghost" onclick="event.stopPropagation();endIntro();openVideo()">▶ Ver el spot completo</button>
       <button class="btn" style="background:#fff;color:var(--ink)" onclick="event.stopPropagation();endIntro('talento')">Trabajá con nosotros</button>
     </div>
   </div>
@@ -595,10 +594,6 @@ html{scroll-padding-top:86px}
 
 <button id="floatCta" onclick="location.hash='';location.hash='#talento'">💼 Trabajá con nosotros</button>
 
-<div id="vlight" onclick="closeVideo()">
-  <button class="vclose" onclick="closeVideo()">✕</button>
-  <video id="vlightVideo" src="spot-creativity-group.mp4" controls playsinline onclick="event.stopPropagation()"></video>
-</div>
 
 <script>
 (function(){
@@ -660,16 +655,6 @@ html{scroll-padding-top:86px}
     requestAnimationFrame(()=>{ intro.classList.remove('done'); show(0); arm(); });
     window.scrollTo({top:0});
   };
-  window.openVideo=function(){
-    const v=document.getElementById('vlightVideo');
-    document.getElementById('vlight').classList.add('open');
-    v.currentTime=0; v.play().catch(()=>{});
-  };
-  window.closeVideo=function(){
-    const v=document.getElementById('vlightVideo');
-    v.pause();
-    document.getElementById('vlight').classList.remove('open');
-  };
 
   if(reducedI){ show(slides.length-1); }
   else arm();
@@ -687,7 +672,6 @@ html{scroll-padding-top:86px}
     <a href="#grupo">Nuestro grupo</a>
     <a href="#universos">Universos</a>
     <a href="#cultura">Cultura</a>
-    <a href="#" onclick="openVideo();return false">▶ El spot</a>
     <a href="#talento">Trabajá con nosotros</a>
     <button class="btn-hub" onclick="openLogin()"><span class="dot"></span> Creativity Hub</button>
   </div>
@@ -1006,7 +990,7 @@ html{scroll-padding-top:86px}
       <div class="cv-sun"></div>
       <img data-logo="petalmark" alt="">
       <q>«Un lugar donde las ideas no esperan aprobaciones eternas: se hacen.»</q>
-      <div style="display:flex;gap:10px;margin-top:24px;position:relative;flex-wrap:wrap"><button class="btn btn-yellow" onclick="openVideo()">▶ Mirá el spot</button><button class="btn btn-ghost" onclick="replayIntro()">✨ Reviví la intro</button></div>
+      <div style="display:flex;gap:10px;margin-top:24px;position:relative;flex-wrap:wrap"><button class="btn btn-yellow" onclick="replayIntro()">✨ Reviví la experiencia</button></div>
     </div>
   </div>
 </section>
@@ -1670,7 +1654,7 @@ const MESES_L = ['','Enero','Febrero','Marzo','Abril','Mayo','Junio','Julio','Ag
 const EMPRESAS = {INFINITY:'Infinity Pharma',SOLS:'SolS',PRODIGY:'Prodigy',INNOVATE:'Innovate Pharma',GASTRO:'Gastronomía','G ASUNCION':'Gastronomía Asunción',CIRCULAR:'Circular',DIRECTOR:'Dirección'};
 const AREAS = ['Marketing y Comunicación','Comercial','Administración y Finanzas','RRHH','Sistemas','Regulatorio','Gastronomía','Logística','Dirección','Otra'];
 const ADMINS = ['gustavo.insfran@infinitypharma.com.ar','gustavo.insfran@creativitygroup.com.ar','rrhh@creativitygroup.com.ar'];
-const MAIL_DESTINO = { soporte:'gustavo.insfran@infinitypharma.com.ar', salas:'gustavo.insfran@infinitypharma.com.ar', almuerzos:'gustavo.insfran@infinitypharma.com.ar' };
+const MAIL_DESTINO = { soporte:{to:'soporte.sistemas@innovatepharma.com.ar',cc:'fgonzalez@creativitygroup.com.ar'}, salas:{to:'recepcion@innovatepharma.com.ar',cc:'sbossel@creativitygroup.com.ar'}, almuerzos:{to:'sbossel@creativitygroup.com.ar'} };
 const FBCONF = {apiKey:"AIzaSyC2ywnoU_lngTmBUhhC5yaKhNKKExghYK4",authDomain:"creativity-hub-54945.firebaseapp.com",projectId:"creativity-hub-54945",storageBucket:"creativity-hub-54945.firebasestorage.app",messagingSenderId:"985418381448",appId:"1:985418381448:web:c81990514a056b7bbb073d"};
 
 /* ---- cumpleaños (funciona en demo y real) ---- */
@@ -1728,9 +1712,11 @@ const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&am
 
 /* ---- mails de solicitudes (FormSubmit) ---- */
 function sendMail(tipo, subject, lineas){
-  const to = MAIL_DESTINO[tipo]||MAIL_DESTINO.soporte;
-  fetch('https://formsubmit.co/ajax/'+to,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
-    body:JSON.stringify({_subject:'[Creativity Hub] '+subject, _template:'table', ...lineas})
+  const d = MAIL_DESTINO[tipo]||MAIL_DESTINO.soporte;
+  const body = {_subject:'[Creativity Hub] '+subject, _template:'table', ...lineas};
+  if(d.cc) body._cc = d.cc;
+  fetch('https://formsubmit.co/ajax/'+d.to,{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+    body:JSON.stringify(body)
   }).catch(()=>{});
 }
 
@@ -2046,5 +2032,266 @@ montarCumples();
 })();
 </script>
 <!-- ===== /HUB REAL ===== -->
+<!-- ===== v8.1: visita guiada 2.0 + CV real ===== -->
+<style>
+.tour.guided{background:rgba(23,19,32,.32);align-items:flex-end;padding-bottom:30px;backdrop-filter:none}
+.tour.guided .tour-card{max-width:520px;box-shadow:0 30px 90px rgba(0,0,0,.4);text-align:left;padding:26px 30px}
+.tour.guided .ti{width:52px;height:52px;font-size:1.4rem;margin:0 0 12px}
+.tour.guided h3{font-size:1.05rem}
+.tour.guided p{font-size:.83rem;margin-bottom:16px}
+.tour.guided .tour-dots{justify-content:flex-start;margin-bottom:14px}
+.tour.guided .tour-nav{justify-content:flex-end}
+</style>
+<script>
+(function(){
+'use strict';
+/* ---- visita guiada 2.0: recorre las secciones reales ---- */
+const PASOS=[
+ {view:'inicio',  ico:'👋', t:'¡Bienvenido/a al Creativity Hub!', x:'Tu universo como parte del grupo: novedades, beneficios, gestiones y el equipo, todo en un solo lugar. Te lo muestro en un minuto.'},
+ {view:'perfil',  ico:'📷', t:'Tu perfil, con tu cara', x:'Subí tu foto y completá tus datos. Tu identidad te acompaña en el chat y en todo el Hub.'},
+ {view:'pizarra', ico:'📌', t:'La pizarra del grupo', x:'Comunicados oficiales en tiempo real: eventos, novedades y reconocimientos. Lo que se publica acá lo ven todos al instante.'},
+ {view:'beneficios', ico:'🎁', t:'Tus beneficios', x:'De 9 a 17, almuerzo incluido, Wellhub para tu bienestar, día de cumple y más. Cada tarjeta te explica cómo usarlo.'},
+ {view:'cupon',   ico:'🎟️', t:'Cupón 20% en gastronomía', x:'Generá tu credencial con tu nombre y mostrala en caja de BUCHE, ÁVITO, Runfla y JOIA Pastas.'},
+ {view:'salas',   ico:'📅', t:'Gestiones en un clic', x:'Reservá salas, completá tu planilla de almuerzos y pedí soporte a Sistemas. Cada solicitud queda registrada y le avisa por mail a quien corresponde.'},
+ {view:'chat',    ico:'💬', t:'El chat del equipo', x:'Canales por tema, en tiempo real, con fotos de perfil y quién está en línea. Acá vive la conversación del grupo.'},
+ {view:'cumples', ico:'🎂', t:'Cumpleaños del grupo', x:'Todos los cumples, mes a mes. Los de hoy aparecen destacados para que nadie se quede sin saludo.'},
+ {view:'inicio',  ico:'🚀', t:'¡Todo tuyo!', x:'Explorá tranquilo/a: nada se rompe. Cualquier duda, preguntá en #general. ¡Que lo disfrutes!'}
+];
+let paso=0;
+function irA(view){
+  const el=document.getElementById('v-'+view);
+  const side=document.querySelector('[data-view='+view+']');
+  if(el&&side&&typeof go==='function'){ go(view,side); if(view==='perfil'&&typeof pintarPerfil==='function'){try{pintarPerfil()}catch(e){}} }
+}
+window.renderTour=function(){
+  const s=PASOS[paso];
+  irA(s.view);
+  document.getElementById('tourIco').textContent=s.ico;
+  document.getElementById('tourTitle').textContent=s.t;
+  document.getElementById('tourText').textContent=s.x;
+  document.getElementById('tourDots').innerHTML=PASOS.map((_,i)=>`<span class="${i===paso?'on':''}"></span>`).join('');
+  document.getElementById('tourNext').textContent=paso===PASOS.length-1?'Empezar ✨':'Siguiente →';
+};
+window.startTour=function(){ paso=0; const t=document.getElementById('tour'); t.classList.add('guided','open'); renderTour(); };
+window.nextTour=function(){ if(paso===PASOS.length-1){ endTour(); return; } paso++; renderTour(); };
+window.endTour=function(){ const t=document.getElementById('tour'); t.classList.remove('open'); irA('inicio'); if(typeof toast==='function') toast('¡El Hub es todo tuyo! 💜'); };
+
+/* botón para revivir la visita */
+const hb=document.querySelector('#v-inicio .hero-banner');
+if(hb && !hb.querySelector('.btn-ghost')){
+  hb.querySelector('.btn').insertAdjacentHTML('afterend',' <button class="btn btn-ghost" onclick="startTour()">✨ Visita guiada</button>');
+}
+
+/* ---- formulario público de CV: envío real a RRHH ---- */
+const cv=document.querySelector('.cv-form');
+if(cv){
+  cv.onsubmit=function(ev){
+    ev.preventDefault();
+    const inp=cv.querySelectorAll('input'), sel=cv.querySelector('select');
+    const datos={ _subject:'[Web Creativity] Nueva postulación · '+inp[0].value, _template:'table',
+      Nombre:inp[0].value, Email:inp[1].value, Area:sel.value, LinkedIn:inp[2].value||'—' };
+    fetch('https://formsubmit.co/ajax/rrhh@creativitygroup.com.ar',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},body:JSON.stringify(datos)})
+      .then(()=>{}).catch(()=>{});
+    if(typeof toast==='function') toast('¡Gracias! Tu postulación llegó a RRHH 💜');
+    cv.reset();
+  };
+}
+})();
+</script>
+<!-- ===== /v8.1 ===== -->
+<!-- ===== v8.2: CRM de Talento + Dashboard Directorio ===== -->
+<style>
+.admin-only{display:none!important}
+body.admin .admin-only{display:flex!important}
+/* kanban */
+.kb-wrap{display:grid;grid-template-columns:repeat(auto-fit,minmax(230px,1fr));gap:12px;align-items:start}
+.kb-col{background:#EDEAF6;border-radius:16px;padding:12px;min-height:120px}
+.kb-col>h5{font-size:.66rem;letter-spacing:.16em;text-transform:uppercase;font-weight:800;color:var(--lila-d);padding:4px 8px 10px;display:flex;justify-content:space-between}
+.kb-col>h5 .cnt{background:#fff;border-radius:99px;padding:1px 9px;color:var(--soft)}
+.kb-card{background:#fff;border-radius:12px;padding:12px 14px;margin-bottom:10px;box-shadow:0 3px 10px rgba(43,35,64,.06);font-size:.8rem}
+.kb-card b{display:block;font-size:.85rem}
+.kb-card .meta{color:var(--soft);font-size:.68rem;margin:3px 0 8px}
+.kb-mv{display:flex;gap:6px;margin-top:8px}
+.kb-mv button{flex:1;background:var(--grad-soft);color:var(--lila-d);border-radius:8px;padding:6px;font-size:.66rem;font-weight:700}
+.kb-mv button:hover{background:var(--lila);color:#fff}
+.kb-notas{margin-top:8px;border-top:1px dashed var(--line);padding-top:8px;display:none}
+.kb-card.open .kb-notas{display:block}
+.kb-nota{font-size:.7rem;background:var(--bg);border-radius:8px;padding:6px 9px;margin-bottom:5px}
+.kb-nota small{color:var(--soft);display:block;font-size:.6rem}
+.kb-notas input{width:100%;border:1.5px solid var(--line);border-radius:8px;padding:7px 10px;font-size:.72rem;font-family:inherit}
+.kb-toggle{background:none;color:var(--lila-d);font-size:.66rem;font-weight:700;padding:0;margin-top:6px}
+.kb-hist{font-size:.62rem;color:var(--soft);margin-top:6px}
+/* dashboard */
+.kpi-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:14px;margin-bottom:22px}
+.kpi{background:#fff;border-radius:18px;padding:20px;box-shadow:0 4px 16px rgba(43,35,64,.05);position:relative;overflow:hidden}
+.kpi::after{content:'';position:absolute;right:-20px;top:-20px;width:64px;height:64px;border-radius:50%;border:7px solid var(--yellow);opacity:.3}
+.kpi b{font-size:2rem;font-weight:800;display:block;color:var(--ink)}
+.kpi span{font-size:.72rem;color:var(--soft);font-weight:600}
+.dash-cols2{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+.bar-row{display:flex;align-items:center;gap:10px;margin-bottom:9px;font-size:.75rem}
+.bar-row .lbl{width:110px;color:var(--soft);font-weight:600;flex-shrink:0;text-align:right}
+.bar-row .bar{flex:1;height:18px;background:var(--bg);border-radius:99px;overflow:hidden}
+.bar-row .bar i{display:block;height:100%;border-radius:99px;background:var(--grad);transition:width .8s cubic-bezier(.2,.8,.3,1)}
+.bar-row .val{width:30px;font-weight:800;color:var(--ink)}
+@media(max-width:900px){.dash-cols2{grid-template-columns:1fr}}
+</style>
+<script>
+(function(){
+'use strict';
+if(typeof firebase==='undefined') return;
+const db=firebase.firestore(), FV=firebase.firestore.FieldValue;
+const $=id=>document.getElementById(id);
+const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+const ESTADOS=['Nueva','En revisión','Entrevista','Finalista','Contratada','Descartada'];
+const ADMINS2=['gustavo.insfran@infinitypharma.com.ar','gustavo.insfran@creativitygroup.com.ar','rrhh@creativitygroup.com.ar','demo@creativitygroup.com.ar'];
+let YO=null, YONOM='';
+
+/* CV público → también a Firestore (trazabilidad desde el origen) */
+const cv=document.querySelector('.cv-form');
+if(cv){
+  cv.onsubmit=function(ev){
+    ev.preventDefault();
+    const inp=cv.querySelectorAll('input'), sel=cv.querySelector('select');
+    const p={nombre:inp[0].value.trim(),email:inp[1].value.trim(),area:sel.value,linkedin:inp[2].value.trim()||null};
+    if(!p.nombre||!p.email) return;
+    db.collection('postulaciones').add({...p,estado:'Nueva',origen:'Web',ts:FV.serverTimestamp(),
+      historial:[{a:'Nueva',por:'Formulario web',fecha:new Date().toISOString().slice(0,10)}]}).catch(()=>{});
+    fetch('https://formsubmit.co/ajax/rrhh@creativitygroup.com.ar',{method:'POST',headers:{'Content-Type':'application/json','Accept':'application/json'},
+      body:JSON.stringify({_subject:'[Web Creativity] Nueva postulación · '+p.nombre,_template:'table',Nombre:p.nombre,Email:p.email,Area:p.area,LinkedIn:p.linkedin||'—',CRM:'Cargada automáticamente en el CRM de Talento del Hub'})}).catch(()=>{});
+    if(typeof toast==='function') toast('¡Gracias! Tu postulación ya está en el radar de RRHH 💜');
+    cv.reset();
+  };
+}
+
+firebase.auth().onAuthStateChanged(async user=>{
+  if(!user) return;
+  YO=user;
+  const ref=db.collection('users').doc(user.uid);
+  const snap=await ref.get();
+  const data=snap.exists?snap.data():{};
+  YONOM=data.nombre||user.email;
+  if(ADMINS2.includes((user.email||'').toLowerCase()) && data.rol!=='admin'){
+    await ref.update({rol:'admin'}); document.body.classList.add('admin');
+  }
+  if(data.rol==='admin'||ADMINS2.includes((user.email||'').toLowerCase())){
+    document.body.classList.add('admin');
+    montarCRM(); montarDash();
+  }
+});
+
+/* ---------- CRM DE TALENTO ---------- */
+function montarCRM(){
+  if(document.querySelector('[data-view=talento]')) return;
+  const anchor=document.querySelector('[data-view=organigrama]');
+  anchor.insertAdjacentHTML('beforebegin','<div class="side-item admin-only" data-view="talento" onclick="go(\'talento\',this)"><span class="si">🧲</span><span class="st">Talento (CRM)</span></div>');
+  document.querySelector('.hub-main').insertAdjacentHTML('beforeend',`
+  <div class="hub-view" id="v-talento">
+    <div class="notice">🧲 <b>CRM de Talento.</b> Cada postulación de la web entra sola al pipeline. Mové candidatos de etapa, dejá notas: todo queda trazado con autor y fecha. RRHH trabaja acá, el Directorio lo ve medido en el Dashboard.</div>
+    <div class="composer" style="margin-bottom:16px"><h4>➕ Cargar candidato manual</h4>
+      <div class="row"><div class="field"><label>Nombre y apellido</label><input id="crmNombre"></div>
+      <div class="field"><label>Email</label><input id="crmEmail"></div></div>
+      <div class="row"><div class="field"><label>Área</label><input id="crmArea" placeholder="Ej.: Comercial"></div>
+      <div class="field"><label>Origen</label><select id="crmOrigen"><option>Feria de empleo</option><option>LinkedIn</option><option>Referido</option><option>Otro</option></select></div></div>
+      <button class="btn btn-lila" onclick="crmAlta()">Sumar al pipeline</button>
+    </div>
+    <div class="kb-wrap" id="kbWrap"></div>
+  </div>`);
+  db.collection('postulaciones').onSnapshot(s=>{
+    const por={}; ESTADOS.forEach(e=>por[e]=[]);
+    s.forEach(d=>{ const p={id:d.id,...d.data()}; (por[p.estado]||por['Nueva']).push(p); });
+    window.__POSTU = s.size;
+    const wrap=$('kbWrap'); if(!wrap) return;
+    wrap.innerHTML=ESTADOS.map(est=>{
+      const cards=por[est].sort((a,b)=>(b.ts&&b.ts.seconds||0)-(a.ts&&a.ts.seconds||0)).map(p=>{
+        const f=p.ts&&p.ts.toDate?p.ts.toDate().toLocaleDateString('es-AR',{day:'numeric',month:'short'}):'';
+        const i=ESTADOS.indexOf(est);
+        const mv=[i>0?`<button onclick="crmMover('${p.id}','${ESTADOS[i-1]}')">◀ ${ESTADOS[i-1]}</button>`:'',
+                  i<ESTADOS.length-2?`<button onclick="crmMover('${p.id}','${ESTADOS[i+1]}')">${ESTADOS[i+1]} ▶</button>`:'',
+                  est!=='Descartada'&&est!=='Contratada'?`<button onclick="crmMover('${p.id}','Descartada')" style="flex:0 0 34px">✕</button>`:''].join('');
+        const notas=(p.notas||[]).map(n=>`<div class="kb-nota">${esc(n.txt)}<small>${esc(n.por)} · ${esc(n.fecha)}</small></div>`).join('');
+        const hist=(p.historial||[]).map(h=>`${esc(h.a)} (${esc(h.por)} ${esc(h.fecha)})`).join(' → ');
+        return `<div class="kb-card" id="kb_${p.id}"><b>${esc(p.nombre)}</b>
+          <div class="meta">${esc(p.area||'—')} · ${esc(p.origen||'Web')} · ${f}<br>${esc(p.email||'')}</div>
+          <div class="kb-mv">${mv}</div>
+          <button class="kb-toggle" onclick="document.getElementById('kb_${p.id}').classList.toggle('open')">📝 Notas (${(p.notas||[]).length}) · Historial</button>
+          <div class="kb-notas">${notas}
+            <input placeholder="Escribí una nota y Enter…" onkeydown="if(event.key==='Enter')crmNota('${p.id}',this)">
+            <div class="kb-hist">🧭 ${hist||'—'}</div>
+          </div></div>`;
+      }).join('');
+      return `<div class="kb-col"><h5>${est}<span class="cnt">${por[est].length}</span></h5>${cards||'<div style="font-size:.68rem;color:var(--soft);text-align:center;padding:8px">—</div>'}</div>`;
+    }).join('');
+  });
+}
+window.crmAlta=function(){
+  const n=$('crmNombre').value.trim(); if(!n){toast('Nombre, como mínimo 🙂');return;}
+  db.collection('postulaciones').add({nombre:n,email:$('crmEmail').value.trim(),area:$('crmArea').value.trim(),origen:$('crmOrigen').value,estado:'Nueva',ts:FV.serverTimestamp(),historial:[{a:'Nueva',por:YONOM,fecha:new Date().toISOString().slice(0,10)}]});
+  $('crmNombre').value='';$('crmEmail').value='';$('crmArea').value='';
+  toast('Candidato sumado al pipeline 🧲');
+};
+window.crmMover=function(id,estado){
+  db.collection('postulaciones').doc(id).update({estado,historial:FV.arrayUnion({a:estado,por:YONOM,fecha:new Date().toISOString().slice(0,10)})});
+  toast('Movido a '+estado);
+};
+window.crmNota=function(id,inp){
+  const txt=inp.value.trim(); if(!txt) return;
+  db.collection('postulaciones').doc(id).update({notas:FV.arrayUnion({txt,por:YONOM,fecha:new Date().toISOString().slice(0,10)})});
+  inp.value='';
+};
+
+/* ---------- DASHBOARD DIRECTORIO ---------- */
+function montarDash(){
+  if(document.querySelector('[data-view=dash]')) return;
+  const anchor=document.querySelector('[data-view=talento]');
+  anchor.insertAdjacentHTML('beforebegin','<div class="side-item admin-only" data-view="dash" onclick="go(\'dash\',this)"><span class="si">📊</span><span class="st">Dashboard</span></div>');
+  document.querySelector('.hub-main').insertAdjacentHTML('beforeend',`
+  <div class="hub-view" id="v-dash">
+    <div class="notice">📊 <b>Dashboard del Directorio.</b> Indicadores del Hub en tiempo real: personas, talento, solicitudes y actividad. Todo medible, nada en el aire.</div>
+    <div class="kpi-grid" id="kpis"></div>
+    <div class="dash-cols2">
+      <div class="card"><h4>🧲 Embudo de talento</h4><div id="funnel"></div></div>
+      <div class="card"><h4>🛠️ Solicitudes por tipo</h4><div id="solTipos"></div></div>
+      <div class="card"><h4>👥 Colaboradores por área</h4><div id="porArea"></div></div>
+      <div class="card"><h4>💬 Actividad del chat</h4><div id="chatAct"></div><p style="font-size:.68rem;color:var(--soft);margin-top:8px">Mensajes acumulados por canal.</p></div>
+    </div>
+  </div>`);
+  const S={users:0,activos:0,areas:{},postu:{},sol:{},solAb:0,reservas:0,chat:{}};
+  const barras=(cont,obj,color)=>{
+    const el=$(cont); if(!el) return;
+    const max=Math.max(1,...Object.values(obj));
+    el.innerHTML=Object.entries(obj).map(([k,v])=>`<div class="bar-row"><span class="lbl">${esc(k)}</span><div class="bar"><i style="width:${v/max*100}%;${color?'background:'+color:''}"></i></div><span class="val">${v}</span></div>`).join('')||'<p style="font-size:.75rem;color:var(--soft)">Sin datos aún.</p>';
+  };
+  const kpis=()=>{ $('kpis').innerHTML=`
+    <div class="kpi"><b>${S.users}</b><span>Cuentas en el Hub</span></div>
+    <div class="kpi"><b>${S.activos}</b><span>Activos esta semana</span></div>
+    <div class="kpi"><b>${Object.values(S.postu).reduce((a,b)=>a+b,0)}</b><span>Postulaciones totales</span></div>
+    <div class="kpi"><b>${S.postu['Contratada']||0}</b><span>Contrataciones</span></div>
+    <div class="kpi"><b>${S.solAb}</b><span>Solicitudes abiertas</span></div>
+    <div class="kpi"><b>${S.reservas}</b><span>Salas reservadas hoy</span></div>`; };
+  db.collection('users').onSnapshot(s=>{
+    S.users=s.size;S.activos=0;S.areas={};
+    s.forEach(d=>{const u=d.data();
+      if(u.lastSeen&&u.lastSeen.toDate&&(Date.now()-u.lastSeen.toDate().getTime()<7*86400000))S.activos++;
+      S.areas[u.area||'Otra']=(S.areas[u.area||'Otra']||0)+1;});
+    kpis();barras('porArea',S.areas,'linear-gradient(90deg,#3E56B0,#7B6CD9)');
+  });
+  db.collection('postulaciones').onSnapshot(s=>{
+    S.postu={};ESTADOS.forEach(e=>S.postu[e]=0);
+    s.forEach(d=>{const e=d.data().estado||'Nueva';S.postu[e]=(S.postu[e]||0)+1;});
+    kpis();barras('funnel',S.postu);
+  });
+  db.collection('solicitudes').onSnapshot(s=>{
+    S.sol={};S.solAb=0;
+    s.forEach(d=>{const x=d.data();const t=x.tipo==='soporte'?'Soporte IT':x.tipo==='sala'?'Salas':'Almuerzos';S.sol[t]=(S.sol[t]||0)+1;if(x.estado==='abierto')S.solAb++;});
+    kpis();barras('solTipos',S.sol,'linear-gradient(90deg,#F79433,#FCE762)');
+  });
+  db.collection('reservas').where('fecha','==',new Date().toISOString().slice(0,10)).onSnapshot(s=>{S.reservas=s.size;kpis();});
+  ['general','marketing','rrhh-consultas','capacitaciones'].forEach(ch=>{
+    db.collection('chats').doc(ch).collection('msgs').onSnapshot(s=>{S.chat['#'+ch]=s.size;barras('chatAct',S.chat,'linear-gradient(90deg,#92278F,#C86BC4)');});
+  });
+}
+})();
+</script>
+<!-- ===== /v8.2 ===== -->
 </body>
 </html>
