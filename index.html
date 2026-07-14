@@ -2143,7 +2143,7 @@ const db=firebase.firestore(), FV=firebase.firestore.FieldValue;
 const $=id=>document.getElementById(id);
 const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
 const ESTADOS=['Nueva','En revisión','Entrevista','Finalista','Contratada','Descartada'];
-const ADMINS2=['gustavo.insfran@infinitypharma.com.ar','gustavo.insfran@creativitygroup.com.ar','rrhh@creativitygroup.com.ar','demo@creativitygroup.com.ar'];
+const ADMINS2=['gustavo.insfran@infinitypharma.com.ar','gustavo.insfran@creativitygroup.com.ar','rrhh@creativitygroup.com.ar','demo@creativitygroup.com.ar','hub.bot@creativitygroup.com.ar'];
 let YO=null, YONOM='';
 
 /* CV público → también a Firestore (trazabilidad desde el origen) */
@@ -2293,5 +2293,59 @@ function montarDash(){
 })();
 </script>
 <!-- ===== /v8.2 ===== -->
+<!-- ===== v8.3: saludos de cumple para todos + instructivo ===== -->
+<style>
+.saludo-box{background:linear-gradient(120deg,#FDF6D8,#FFE3D3);border-radius:16px;padding:16px 20px;margin-bottom:18px;display:flex;gap:14px;align-items:center;flex-wrap:wrap}
+.saludo-box b{font-size:.9rem}
+.saludo-box input{flex:1;min-width:200px;border:1.5px solid rgba(124,92,191,.25);border-radius:99px;padding:10px 16px;font-family:inherit;font-size:.82rem;background:#fff}
+.saludo-box .btn{padding:10px 22px;font-size:.8rem}
+.instr-link{display:block;margin-top:10px;font-size:.74rem;color:var(--lila-d);font-weight:600;cursor:pointer;text-decoration:underline}
+</style>
+<script>
+(function(){
+'use strict';
+if(typeof firebase==='undefined') return;
+const db=firebase.firestore(), FV=firebase.firestore.FieldValue;
+const esc=s=>String(s||'').replace(/[<>&"]/g,c=>({'<':'&lt;','>':'&gt;','&':'&amp;','"':'&quot;'}[c]));
+
+/* link al instructivo en la tarjeta de login */
+function ponerInstructivo(){
+  const card=document.querySelector('.login-card');
+  if(card && !card.querySelector('.instr-link')){
+    card.insertAdjacentHTML('beforeend','<a class="instr-link" href="https://gustavoinsfran-dotcom.github.io/creativity-group-site/instructivo-login.mp4" target="_blank" rel="noopener">🎬 ¿Primera vez? Mirá el instructivo de ingreso (30 seg)</a>');
+  }
+}
+ponerInstructivo();
+const _openLogin=window.openLogin;
+window.openLogin=function(){ _openLogin(); setTimeout(ponerInstructivo,50); };
+
+/* saludos de cumpleaños: cualquier colaborador puede dejar un saludo en la pizarra */
+firebase.auth().onAuthStateChanged(user=>{
+  if(!user) return;
+  setTimeout(()=>{
+    const vc=document.getElementById('v-cumples');
+    if(!vc || document.getElementById('saludoBox')) return;
+    const hoy=[...vc.querySelectorAll('.cum-item.hoy b')].map(b=>b.textContent.replace(' 🎉','').trim());
+    if(!hoy.length) return;
+    const sel=hoy.length>1?`<select id="saludoQuien" style="border:1.5px solid rgba(124,92,191,.25);border-radius:99px;padding:10px 14px;font-family:inherit;font-size:.82rem">${hoy.map(n=>`<option>${esc(n)}</option>`).join('')}</select>`:`<input type="hidden" id="saludoQuien" value="${esc(hoy[0])}">`;
+    vc.insertAdjacentHTML('afterbegin',`<div class="saludo-box" id="saludoBox">🎂 <b>¡Hoy cumple ${hoy.length>1?'gente del equipo':esc(hoy[0])}!</b> ${sel}
+      <input id="saludoTxt" placeholder="Dejale tu saludo… se publica en la pizarra" maxlength="200">
+      <button class="btn btn-lila" onclick="mandarSaludo()">Publicar saludo 🎉</button></div>`);
+  }, 1200);
+});
+window.mandarSaludo=function(){
+  const quien=document.getElementById('saludoQuien'); const txt=document.getElementById('saludoTxt');
+  const nombre=(quien.value||quien.textContent).trim(); const saludo=txt.value.trim();
+  if(!saludo){ toast('Escribí un saludo cortito 🎂'); return; }
+  const u=firebase.auth().currentUser;
+  db.collection('users').doc(u.uid).get().then(s=>{
+    const autor=(s.exists&&s.data().nombre)||u.email;
+    db.collection('pizarra').add({tag:'Cumpleaños',emoji:'🎂',titulo:'¡Feliz cumple, '+nombre+'!',cuerpo:saludo,autor,uid:u.uid,ts:FV.serverTimestamp()});
+    txt.value=''; toast('¡Saludo publicado en la pizarra! 🎉');
+  });
+};
+})();
+</script>
+<!-- ===== /v8.3 ===== -->
 </body>
 </html>
